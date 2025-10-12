@@ -1,0 +1,11 @@
+map_loader:
+  ros__parameters:
+    frame_id: "/map"            # {string}
+    max_cost: 99               # {int} DO NOT CHANGE
+    min_cost: 0                 # {int} DO NOT CHANGE
+    topic_map: "/map"           # {string}
+    topic_global_costmap: "/global_costmap"   #{string}
+    circumscribed_radius: 0.2   # {double} [m]
+    inflation_radius: 0.8       # {double} [m]
+    cost_exponent: 8.0          # {double}
+    # filepath: "src/ee3305_bringup/maps/ee3305" # {string} this will be overridden by the launch file.
