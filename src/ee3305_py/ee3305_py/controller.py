@@ -74,10 +74,25 @@ class Controller(Node):
     # Make sure path and robot positions are already received, and the path contains at least one point.
     def getLookaheadPoint_(self):
         # Find the point along the path that is closest to the robot
-
+        min_dist = float('inf')
+        closest_idx = 0
+        for i, pose in enumerate(self.path_poses_):
+            px = pose.pose.position.x
+            py = pose.pose.position.y
+            dist = math.hypot(px - self.robot_x, py - self.robot_y)
+            if dist < min_dist:
+                min_dist = dist
+                closest_idx = i
         # From the closest point, iterate towards the goal and find the first point that is at least a lookahead distance away.
         # Return the goal point if no such lookahead point can be found
         lookahead_idx = len(self.path_poses_) - 1
+        for i in range(closest_idx, len(self.path_poses_)):
+            px = self.path_poses_[i].pose.position.x
+            py = self.path_poses_[i].pose.position.y
+            dist = math.hypot(px - self.robot_x, py - self.robot_y)
+            if dist >= self.lookahead_distance:
+                lookahead_idx = i
+                break   # Stop at first point that satisfies lookahead distance
 
         # Get the lookahead coordinates
         lookahead_pose = self.path_poses_[lookahead_idx]
