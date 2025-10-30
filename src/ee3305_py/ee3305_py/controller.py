@@ -119,12 +119,33 @@ class Controller(Node):
         lookahead_x, lookahead_y = self.getLookaheadPoint_()
 
         # get distance to lookahead point (not to be confused with lookahead_distance)
-
+        dx = lookahead_x - self.robot_x
+        dy = lookahead_y - self.robot_y
+        dist_to_lookahead = hypot(dx, dy)
+        
         # stop the robot if close to the point.
+        if dist_to_lookahead < self.goal_tolerance:  # goal_tolerance is a small value (e.g., 0.1)
+            lin_vel = 0.0
+            ang_vel = 0.0
+        else:  
+        # Transform lookahead point to robot's local frame (for curvature calculation)
+        # Robot's yaw (heading) should be available as self.robot_yaw
+            lx = cos(-self.robot_yaw) * dx - sin(-self.robot_yaw) * dy
+            ly = sin(-self.robot_yaw) * dx + cos(-self.robot_yaw) * dy
+        
+            # Calculate curvature (kappa) for pure pursuit
+            # The basic formula is kappa = 2 * ly / Ld^2, where Ld is dist_to_lookahead
+            if dist_to_lookahead > 0:
+                curvature = 2 * ly / (dist_to_lookahead ** 2)
+            else:
+                curvature = 0.0
 
-        # get curvature
+                # Calculate desired linear and angular velocities
+            lin_vel = min(self.max_linear_speed, dist_to_lookahead)  # Slow down as approaching target
+            ang_vel = curvature * lin_vel
 
-        # calculate velocities
+            # Optionally: saturate angular velocity if needed
+            ang_vel = max(-self.max_angular_speed, min(self.max_angular_speed, ang_vel))
 
         # saturate velocities. The following can result in the wrong curvature,
         # but only when the robot is travelling too fast (which should not occur if well tuned).
