@@ -79,17 +79,17 @@ class Controller(Node):
         for i, pose in enumerate(self.path_poses_):
             px = pose.pose.position.x
             py = pose.pose.position.y
-            dist = math.hypot(px - self.robot_x, py - self.robot_y)
+            dist = hypot(px - self.robot_x, py - self.robot_y)
             if dist < min_dist:
                 min_dist = dist
                 closest_idx = i
         # From the closest point, iterate towards the goal and find the first point that is at least a lookahead distance away.
-        # Return the goal point if no such lookahead point can be found
+        # Return the goal point if no more lookahead point
         lookahead_idx = len(self.path_poses_) - 1
         for i in range(closest_idx, len(self.path_poses_)):
             px = self.path_poses_[i].pose.position.x
             py = self.path_poses_[i].pose.position.y
-            dist = math.hypot(px - self.robot_x, py - self.robot_y)
+            dist = hypot(px - self.robot_x, py - self.robot_y)
             if dist >= self.lookahead_distance:
                 lookahead_idx = i
                 break   # Stop at first point that satisfies lookahead distance
@@ -144,7 +144,7 @@ class Controller(Node):
             lin_vel = min(self.max_linear_speed, dist_to_lookahead)  # Slow down as approaching target
             ang_vel = curvature * lin_vel
 
-            # Optionally: saturate angular velocity if needed
+            # Saturate angular velocity if needed
             ang_vel = max(-self.max_angular_speed, min(self.max_angular_speed, ang_vel))
 
         # saturate velocities. The following can result in the wrong curvature,
