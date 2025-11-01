@@ -31,14 +31,21 @@ class Controller(Node):
         self.max_ang_vel_ = self.get_parameter("max_ang_vel").value
 
         # Handles: Topic Subscribers
-        # !TODO: path subscriber
+        # Subscribers
+        self.sub_path_ = self.create_subscription(
+            Path, 'planned_path', self.callbackSubPath_, 10
+        )
+        self.sub_odom_ = self.create_subscription(
+            Odometry, 'odom', self.callbackSubOdom_, 10
+        )
 
-        # !TODO: odometry subscriber
-
-        # Handles: Topic Publishers
-        # !TODO: command velocities publisher
-
-        # !TODO: lookahead point publisher
+        # Publishers
+        self.pub_cmd_vel_ = self.create_publisher(
+            TwistStamped, 'cmd_vel', 10
+        )
+        self.pub_lookahead_ = self.create_publisher(
+            PoseStamped, 'lookahead_point', 10
+        )
         
         # Handles: Timers
         self.timer = self.create_timer(1.0 / self.frequency_, self.callbackTimer_)
