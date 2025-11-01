@@ -102,7 +102,7 @@ class Planner(Node):
         self.costmap_rows_ = msg.info.height
         self.costmap_cols_ = msg.info.width
 
-        self.costmap_ = list(msg.data)
+        self.costmap_ = list(msg.data) #create a copy of the costmap data
 
         # Check if costmap data length matches rows * cols
         '''
@@ -112,7 +112,7 @@ class Planner(Node):
                 f"Costmap data length ({len(self.costmap_)}) != width*height ({expected_len})."
             )
         '''
-        
+
         self.received_map_ = True
 
     # runs the path planner at regular intervals as long as there is a new path request.
@@ -159,17 +159,21 @@ class Planner(Node):
             f"Publishing interpolated path between Start and Goal. Implement dijkstra_() instead."
         )
 
-    # Converts world coordinates to cell column and cell row.
+    # Converts world coordinates to cell column and cell row. (Done - CY)
     def XYToCR_(self, x, y):
-        c = 0 * y
-        r = 0 * x
+        #
+        # Map continuous world coords (meters, map frame) to integer grid indices
+        # Column increases with +X, Row increases with +Y
+        c = int(floor((x - self.costmap_origin_x_) / self.costmap_resolution_))
+        r = int(floor((y - self.costmap_origin_y_) / self.costmap_resolution_))
 
         return c, r
 
-    # Converts cell column and cell row to world coordinates.
+    # Converts cell column and cell row to world coordinates. (Done - CY)
     def CRToXY_(self, c, r):
-        x = 0.0 * c
-        y = 0.0 * r
+        # Map integer grid indices (c,r) to the center of that cell in world coords (meters)
+        x = self.costmap_origin_x_ + (c + 0.5) * self.costmap_resolution_
+        y = self.costmap_origin_y_ + (r + 0.5) * self.costmap_resolution_
 
         return x, y
 
