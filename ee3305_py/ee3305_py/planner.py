@@ -95,8 +95,24 @@ class Planner(Node):
     def callbackSubGlobalCostmap_(self, msg: OccupancyGrid):
         
         # !TODO: write to costmap_, costmap_resolution_, costmap_origin_x_, costmap_origin_y_, costmap_rows_, costmap_cols_
+        # (Done - CY)
+        self.costmap_resolution_ = msg.info.resolution
+        self.costmap_origin_x_ = msg.info.origin.position.x
+        self.costmap_origin_y_ = msg.info.origin.position.y
+        self.costmap_rows_ = msg.info.height
         self.costmap_cols_ = msg.info.width
 
+        self.costmap_ = list(msg.data)
+
+        # Check if costmap data length matches rows * cols
+        '''
+        expected_len = int(self.costmap_rows_ * self.costmap_cols_)
+        if len(self.costmap_) != expected_len:
+            self.get_logger().warn(
+                f"Costmap data length ({len(self.costmap_)}) != width*height ({expected_len})."
+            )
+        '''
+        
         self.received_map_ = True
 
     # runs the path planner at regular intervals as long as there is a new path request.
