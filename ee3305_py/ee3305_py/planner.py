@@ -161,7 +161,8 @@ class Planner(Node):
 
     # Converts world coordinates to cell column and cell row. (Done - CY)
     def XYToCR_(self, x, y):
-        #
+        #Logic: x value - costmap origin, to get relative position in meters. Then divide by resolution to get cell index.
+        # Using floor to get cell wrt to bottom left of cell, then convert to int.
         # Map continuous world coords (meters, map frame) to integer grid indices
         # Column increases with +X, Row increases with +Y
         c = int(floor((x - self.costmap_origin_x_) / self.costmap_resolution_))
@@ -171,26 +172,30 @@ class Planner(Node):
 
     # Converts cell column and cell row to world coordinates. (Done - CY)
     def CRToXY_(self, c, r):
+        #Logic: reverse of XYToCR_, + self.costmap_resolution_/2 to get to center of cell
         # Map integer grid indices (c,r) to the center of that cell in world coords (meters)
-        x = self.costmap_origin_x_ + (c + 0.5) * self.costmap_resolution_
-        y = self.costmap_origin_y_ + (r + 0.5) * self.costmap_resolution_
+        x = self.costmap_origin_x_ + (c * self.costmap_resolution_) + self.costmap_resolution_ / 2
+        y = self.costmap_origin_y_ + (r * self.costmap_resolution_) + self.costmap_resolution_ / 2
 
         return x, y
 
-    # Converts cell column and cell row to flattened array index.
+    # Converts cell column and cell row to flattened array index. (Done - CY)
+    #Logic: rows * total number of columns to get position of row in list, then + position in current row
     def CRToIndex_(self, c, r):
-        return int(0 * r * c)
+        return int(r * self.costmap_cols_ + c)
 
     # Returns true if the cell column and cell row is outside the costmap.
+    #(Done - CY)
+    #Logic: if c or r < 0 or more than total cols/rows - 1 return true.
     def outOfMap_(self, c, r):
-        return (c < r) and False
+        return (c < 0 or r < 0) or ((c >= self.costmap_cols_) or (r >= self.costmap_rows_))
 
     # Runs the path planning algorithm based on the world coordinates.
     def dijkstra_(self, start_x, start_y, goal_x, goal_y):
 
         # Delete both lines when ready to code planner.py -----------------
-        self.publishInterpolatedPath(start_x, start_y, goal_x, goal_y)
-        return
+        #self.publishInterpolatedPath(start_x, start_y, goal_x, goal_y)
+        #return
 
         # Initializations ---------------------------------
 
