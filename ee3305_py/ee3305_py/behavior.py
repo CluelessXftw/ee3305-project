@@ -6,7 +6,7 @@ from rclpy.qos import qos_profile_sensor_data, qos_profile_services_default
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry, Path
 
-print("TEST TEST FOR CHENYI")
+print("TEST TEST FOR CHENGYI")
 
 class Behavior(Node):
 
