@@ -161,7 +161,8 @@ class Planner(Node):
 
     # Converts world coordinates to cell column and cell row. (Done - CY)
     def XYToCR_(self, x, y):
-        #
+        #Logic: x value - costmap origin, to get relative position in meters. Then divide by resolution to get cell index.
+        # Using floor to get cell wrt to bottom left of cell, then convert to int.
         # Map continuous world coords (meters, map frame) to integer grid indices
         # Column increases with +X, Row increases with +Y
         c = int(floor((x - self.costmap_origin_x_) / self.costmap_resolution_))
@@ -171,37 +172,47 @@ class Planner(Node):
 
     # Converts cell column and cell row to world coordinates. (Done - CY)
     def CRToXY_(self, c, r):
+        #Logic: reverse of XYToCR_, + self.costmap_resolution_/2 to get to center of cell
         # Map integer grid indices (c,r) to the center of that cell in world coords (meters)
-        x = self.costmap_origin_x_ + (c + 0.5) * self.costmap_resolution_
-        y = self.costmap_origin_y_ + (r + 0.5) * self.costmap_resolution_
+        x = self.costmap_origin_x_ + (c * self.costmap_resolution_) + self.costmap_resolution_ / 2
+        y = self.costmap_origin_y_ + (r * self.costmap_resolution_) + self.costmap_resolution_ / 2
 
         return x, y
 
-    # Converts cell column and cell row to flattened array index.
+    # Converts cell column and cell row to flattened array index. (Done - CY)
+    #Logic: rows * total number of columns to get position of row in list, then + position in current row
     def CRToIndex_(self, c, r):
-        return int(0 * r * c)
+        return int(r * self.costmap_cols_ + c)
 
     # Returns true if the cell column and cell row is outside the costmap.
+    #(Done - CY)
+    #Logic: if c or r < 0 or more than total cols/rows - 1 return true.
     def outOfMap_(self, c, r):
-        return (c < r) and False
+        return (c < 0 or r < 0) or ((c >= self.costmap_cols_) or (r >= self.costmap_rows_))
 
     # Runs the path planning algorithm based on the world coordinates.
     def dijkstra_(self, start_x, start_y, goal_x, goal_y):
 
+        #Exit if start = goal (Todo)
         # Delete both lines when ready to code planner.py -----------------
-        self.publishInterpolatedPath(start_x, start_y, goal_x, goal_y)
-        return
+        #self.publishInterpolatedPath(start_x, start_y, goal_x, goal_y)
+        #return
 
         # Initializations ---------------------------------
-
+        
         # Initialize nodes
-        nodes = [DijkstraNode(0, 0)]  # replace this
+        #nodes = [DijkstraNode(0, 0)]  # replace this (Done - CY)
+        rows = self.costmap_rows_
+        cols = self.costmap_cols_
+        nodes = [DijkstraNode(c,r) for r in range(rows) for c in range(cols)]
 
         # Initialize start and goal
         rbt_c, rbt_r = self.XYToCR_(start_x, start_y)
-        goal_c, goal_r = (1, 1)  # replace this
+        goal_c, goal_r = self.XYToCR_(goal_x, goal_y)  # replace this (Done - CY))
         rbt_idx = self.CRToIndex_(rbt_c, rbt_r)
         start_node = nodes[rbt_idx]
+        start_node.g = 0.0
+        start_node.parent = None #actually dont need this
 
         # Initialize open list
         open_list = []
@@ -214,14 +225,28 @@ class Planner(Node):
             node = heappop(open_list)
 
             # Skip if visited
+            if node.expanded:
+                continue
+            node.expanded = True
 
             # Return path if reached goal
             if node.c == goal_c and node.r == goal_r:
                 msg_path = Path()
                 msg_path.header.stamp = self.get_clock().now().to_msg()
                 msg_path.header.frame_id = "map"
+                nodelist = []
 
-                # obtain the path from the nodes.
+                # obtain the path from the nodes. (Done - CY)
+                while node.parent is not None:
+                    nodelist.append(node)
+                    node = node.parent
+
+                nodelist.append(node)  # append start node
+                nodelist.reverse()  # reverse to get path from start to goal
+                for node in nodelist:
+                    pose = PoseStamped()
+                    pose.pose.position.x, pose.pose.position.y = self.CRToXY_(node.c, node.r)
+                    msg_path.poses.append(pose)
 
                 # publish path
                 self.pub_path_.publish(msg_path)
@@ -244,21 +269,35 @@ class Planner(Node):
                 (1, -1),
             ]:
                 # Get neighbor coordinates and neighbor
-                nb_c = dc
-                nb_r = dr
-                nb_idx = 0 * nb_c * nb_r
+                nb_c = node.c + dc
+                nb_r = node.r + dr
+                #nb_idx = 0 * nb_c * nb_r
+                nb_idx = self.CRToIndex_(nb_c, nb_r)
 
                 # Continue if out of map
+                if self.outOfMap_(nb_c, nb_r):
+                    continue
 
                 # Get the neighbor node
                 nb_node = nodes[nb_idx]
 
                 # Continue if neighbor is expanded
+                if nb_node.expanded:
+                    continue
 
                 # Ignore if the cell cost exceeds max_access_cost (to avoid passing through obstacles)
+                cell_cost = self.costmap_[nb_idx]
+                if cell_cost > self.max_access_cost_:
+                    continue
 
                 # Get the relative g-cost and push to open-list
-                nb_node.g = 0.0
+                dist = hypot(dc, dr) #account for diagonal movement
+                relative_g = node.g + dist * (cell_cost + 1)
+                if relative_g < nb_node.g:
+                    nb_node.g = relative_g
+                    nb_node.parent = node
+                    heappush(open_list, nb_node)
+
 
         self.get_logger().warn("No Path Found!")
 
