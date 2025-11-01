@@ -137,6 +137,7 @@ class Behavior(Node):
         goal_pose.header.stamp = self.get_clock().now().to_msg()
         
         # !TODO: fill up the array containing the robot coordinates at [0] and goal coordinates at [1]
+        msg_path_request.poses.clear()  #clear it to ensure the msg is appended to [0] and [1] only
         msg_path_request.poses.append(rbt_pose)
         msg_path_request.poses.append(goal_pose)
 
