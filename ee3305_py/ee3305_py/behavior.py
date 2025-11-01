@@ -28,15 +28,15 @@ class Behavior(Node):
         self.goal_pose = self.create_subscription(
             PoseStamped,
             "goal_pose",
-            self.callback_goal_pose,
+            self.callback_sub_goal_pose,
             qos_profile_sensor_data #use this for fast and continuous data 
         )
 
         # !TODO: Odometry subscriber
         self.odometry = self.create_subscription(
             Odometry,
-            "odometry",
-            self.callback_odometry,
+            "odom",
+            self.callback_sub_odom,
             qos_profile_sensor_data #use this for reliable data, every data must be kept
         )
 
