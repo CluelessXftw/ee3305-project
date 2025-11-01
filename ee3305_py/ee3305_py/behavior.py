@@ -7,7 +7,7 @@ from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry, Path
 
 
-print("OMG TESTE TES")
+print("OMG TESTE TESIJDW&Y*UODWHUY@DIOU&(")
 
 class Behavior(Node):
 
